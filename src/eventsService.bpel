@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process
+    name="eventsService"
+    targetNamespace="http://enterprise.netbeans.org/bpel/EventsService/eventsService"
+    xmlns:tns="http://enterprise.netbeans.org/bpel/EventsService/eventsService"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+    xmlns:sxt="http://www.sun.com/wsbpel/2.0/process/executable/SUNExtension/Trace" 
+    xmlns:sxed="http://www.sun.com/wsbpel/2.0/process/executable/SUNExtension/Editor"
+    xmlns:sxeh="http://www.sun.com/wsbpel/2.0/process/executable/SUNExtension/ErrorHandling" xmlns:sxed2="http://www.sun.com/wsbpel/2.0/process/executable/SUNExtension/Editor2" xmlns:ns0="http://xml.netbeans.org/schema/eventServiceExchange" xmlns:ns1="http://j2ee.netbeans.org/xsd/tableSchema">
+    <import namespace="http://j2ee.netbeans.org/wsdl/EventsService/eventsDBWSDL" location="eventsDBWSDL.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <import namespace="http://j2ee.netbeans.org/wsdl/EventsService/eventTransactions" location="eventTransactions.wsdl" importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <partnerLinks>
+        <partnerLink name="almatwe" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventTransactions" partnerLinkType="tns:eventTransactions" myRole="eventTransactionsPortTypeRole"/>
+        <partnerLink name="EventDatabase" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventsDBWSDL" partnerLinkType="tns:jdbcpartner" partnerRole="jdbcPortTypeRole"/>
+    </partnerLinks>
+    <variables>
+        <variable name="FindOut" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventsDBWSDL" messageType="tns:outputMsg"/>
+        <variable name="FindIn" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventsDBWSDL" messageType="tns:inputMsg"/>
+        <variable name="EventTransactionsOperationIn" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventTransactions" messageType="tns:eventTransactionsOperationRequest"/>
+        <variable name="EventTransactionsOperationOut" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventTransactions" messageType="tns:eventTransactionsOperationResponse"/>
+    </variables>
+    <sequence>
+        <receive name="receiveLookupRequest" createInstance="yes" partnerLink="almatwe" operation="eventTransactionsOperation" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventTransactions" portType="tns:eventTransactionsPortType" variable="EventTransactionsOperationIn"/>
+        <assign name="Assign1">
+            <copy>
+                <from>$EventTransactionsOperationIn.lookupRequest/ns0:city</from>
+                <to>$FindIn.part/ns1:EVENTS_Record/ns1:CITY</to>
+            </copy>
+            <copy>
+                <from>$EventTransactionsOperationIn.lookupRequest/ns0:date</from>
+                <to>$FindIn.part/ns1:EVENTS_Record/ns1:EDATE</to>
+            </copy>
+        </assign>
+        <invoke name="findBookings" partnerLink="EventDatabase" operation="find" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventsDBWSDL" portType="tns:jdbcPortType" inputVariable="FindIn" outputVariable="FindOut"/>
+        <assign name="Assign2">
+            <copy>
+                <from>$FindOut.part/ns1:EVENTS_Record/ns1:REC_ID</from>
+                <to>$EventTransactionsOperationOut.lookupResponse/ns0:event/ns0:id</to>
+            </copy>
+            <copy>
+                <from>$FindOut.part/ns1:EVENTS_Record/ns1:ENAME</from>
+                <to>$EventTransactionsOperationOut.lookupResponse/ns0:event/ns0:name</to>
+            </copy>
+            <copy>
+                <from>$FindOut.part/ns1:EVENTS_Record/ns1:EDATE</from>
+                <to>$EventTransactionsOperationOut.lookupResponse/ns0:event/ns0:date</to>
+            </copy>
+            <copy>
+                <from>$FindOut.part/ns1:EVENTS_Record/ns1:CITY</from>
+                <to>$EventTransactionsOperationOut.lookupResponse/ns0:event/ns0:city</to>
+            </copy>
+        </assign>
+        <reply name="sendLookupResponse" partnerLink="almatwe" operation="eventTransactionsOperation" xmlns:tns="http://j2ee.netbeans.org/wsdl/EventsService/eventTransactions" portType="tns:eventTransactionsPortType" variable="EventTransactionsOperationOut"/>
+    </sequence>
+</process>
+
